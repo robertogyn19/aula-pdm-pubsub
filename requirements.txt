@@ -1,2 +1,3 @@
 jupyterlab>=4.4.0
 google-cloud-pubsub>=2.31.0
+apache-beam[gcp]>=2.67.0
