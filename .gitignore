@@ -1,0 +1,10 @@
+.ipynb_checkpoints
+__pycache__
+*.pyc
+.envrc
+.env
+.vscode
+.idea
+dados/*.csv
+dados/*.json
+dados/*.jsonl
