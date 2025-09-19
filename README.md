@@ -8,4 +8,10 @@ Caso precise executar localmente, é necessário autenticar no GCP, você pode u
 gcloud auth application-default login
 ```
 
+Caso esteja sem internet no dataproc, execute esse comando abaixo no terminal
+```
+wget https://storage.googleapis.com/aula-pdm-codigo/aula-pdm-pubsub-main.zip
+unzip aula-pdm-pubsub-main.zip
+```
+
 Veja a [documentação oficial](https://googleapis.dev/python/google-api-core/latest/auth.html) para mais detalhes.
