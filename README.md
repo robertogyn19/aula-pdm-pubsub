@@ -8,6 +8,29 @@ Caso precise executar localmente, é necessário autenticar no GCP, você pode u
 gcloud auth application-default login
 ```
 
+Para criar um cluster dataproc, você pode utilizar o comando abaixo:
+
+```bash
+export USER=<use-nome>
+export PROJECT_ID=$(gcloud config get project)
+
+# Verifique se o ID do projeto do comando abaixo está correto
+echo $PROJECT_ID
+
+gcloud dataproc clusters create $USER \
+   --region us-central1 \
+   --zone us-central1-a \
+   --subnet=default \
+   --single-node \
+   --public-ip-address \
+   --master-machine-type n2-standard-8 \
+   --master-boot-disk-size 50GB \
+   --image-version 2.2-debian12 \
+   --enable-component-gateway \
+   --optional-components=JUPYTER,ICEBERG \
+   --project $PROJECT_ID
+```
+
 Caso esteja sem internet no dataproc, execute esse comando abaixo no terminal
 
 ```
