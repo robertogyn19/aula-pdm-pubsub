@@ -1,3 +1,6 @@
 jupyterlab>=4.4.0
 google-cloud-pubsub>=2.31.0
 apache-beam[gcp]>=2.67.0
+langchain>=0.3.27
+langchain-google-genai>=2.1.12
+pillow>=11.3.0

@@ -1,0 +1,35 @@
+Analise as imagens do imóvel em Goiânia e retorne **EXCLUSIVAMENTE UM JSON** seguindo estas regras:  
+
+1. **Base de Dados:** Use APENAS as opções fornecidas na tabela de Características e Pontuações.  
+2. **Estrutura do JSON:**  
+```json  
+{{  
+    "Estrutura": "valor_ou_NA",  
+    "Esquadrias": "valor_ou_NA",  
+    "Piso": "valor_ou_NA",  
+    "Forro": "valor_ou_NA",  
+    "Instalação Elétrica": "valor_ou_NA",  
+    "Instalação Sanitária": "valor_ou_NA",  
+    "Revestimento Interno": "valor_ou_NA",  
+    "Acabamento Interno": "valor_ou_NA",  
+    "Revestimento Externo": "valor_ou_NA",  
+    "Acabamento Externo": "valor_ou_NA",  
+    "Cobertura": "valor_ou_NA",  
+    "Benfeitorias": ["item1", "item2", ...],  
+    "Tipo de Imóvel": "Residencial/Comercial/Industrial/NA",  
+    "Explicacao": "Texto único com detalhes técnicos de cada item. Exemplo: 'Estrutura: Concreto (vigas aparentes). Esquadrias: Alumínio (perfil fino)...'",  
+    "Descricao": "Descrição geral objetiva (100 palavras) do imóvel e entorno visível nas imagens."  
+}}
+```
+Onde "valor_encontrado_ou_NA" deve ser substituído:
+1. Preencha os valores de "valor_encontrado_ou_NA" com as opções correspondentes da tabela acima, ou "NA" se não for possível identificar.  
+2. Se não conseguir identificar na imagem, coloque NA.
+3. Se na "Cobertura" for classificado como "Laje" ou você perceber que a cobertura é bem feita, a classe "Estrutura" deve ser "concreto", pois apenas o concreto consegue suportar uma cobertura mais pesada.
+4. Em "Acabamento Externo" e "Acabamento Interno" fala sobre como é a pintura, se for identificado uma pintura bem feita e bem recente, classifique como "pintura lavavel". Se a pintura for bem simples e barata, classifique como "pintura simples"
+5. Em muitos campos, é possivel classificar algumas coisas como "Especial", se você perceber que tal construção apresenta algum campo extremamente bem feito e que seja muito mais caro que o normal, classifique o campo como "especial"
+4. Em "Benfeitorias", liste TODAS as benfeitorias mencionadas, SEPARADAS POR VÍRGULA.  Se nenhuma benfeitoria for encontrada, a lista deve ser vazia: [].
+5. Coloque no campo explicação, os detalhes das imagens que fez o modelo tomar a decisão por cada um dos itens do json. Retorne explicação no formato string e nunca JSON.
+6. Em "Tipo de Imóvel" coloque como resultado se é um imóvel Residencial, Comercial ou Industrial.
+7. Em "Descricao" faça uma descrição do conjunto de imagens, com no máximo 100 palavras, para descrever de forma geral o que está vendo nas imagens, além das características da construção. Se tiver outros objetos na imagem além do imóvel, descreva também.
+
+Seja o mais preciso possível. Não inclua informações que não estejam *explicitamente* nas imagens dos imóveis. Responda apenas o JSON."
