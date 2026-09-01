@@ -19,7 +19,10 @@ O conteúdo está em notebooks Jupyter, pensados para rodar em um cluster do Dat
 
 ## Preparação do ambiente
 
-Clone o repositório dentro do cluster do Dataproc e descompacte os dados:
+As aulas rodam no JupyterLab de um cluster Dataproc. A criação do cluster e a configuração de rede que
+lhe dá saída para a internet estão em [`SETUP-DATAPROC.md`](SETUP-DATAPROC.md) — comece por lá.
+
+Com o cluster no ar, clone o repositório dentro dele e descompacte os dados:
 
 ```bash
 cd /home/dataproc
