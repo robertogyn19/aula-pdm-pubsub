@@ -10,9 +10,12 @@ O conteúdo está em notebooks Jupyter, pensados para rodar em um cluster do Dat
 - **Aula 2 — `gcp-dataflow.ipynb`**: Apache Beam, o exemplo de *wordcount* e a execução do mesmo
   pipeline com o `DirectRunner` e com o `DataflowRunner`.
 - `publicacao-anuncios.ipynb`: publica os anúncios no tópico, usado na seção 6 da aula 1.
-- `crawler-dados.ipynb` e `simple_crawler.py`: como os dados de anúncios foram coletados.
-- `arquivo/gcp-pubsub-v1.ipynb`: edição de 2024 da aula, com dados de clientes e vendas em CSV.
-  Mantido só como referência.
+- `subscriber.py` e `subscriber_with_seek.py`: os assinantes da seção 2 da aula 1 em formato de script,
+  para rodar em um terminal ao lado do notebook — um assinante ativo bloqueia o kernel do Jupyter.
+- `crawler-dados.ipynb` e `simple_crawler.py`: como os dados de anúncios foram coletados. O notebook
+  importa o script, que é onde a lógica de fato vive.
+- `arquivo/`: material que não é mais usado em aula, guardado como referência — a edição de 2024
+  (`gcp-pubsub-v1.ipynb`, com dados de clientes e vendas em CSV) e um rascunho de publicação.
 
 ## Preparação do ambiente
 
