@@ -5,6 +5,6 @@ __pycache__
 .env
 .vscode
 .idea
-dados/*.csv
-dados/*.json
-dados/*.jsonl
+dados/**/*.csv
+dados/**/*.json
+dados/**/*.jsonl
