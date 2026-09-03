@@ -7,26 +7,30 @@ como criar o cluster e garantir que ele tenha saída para a internet.
 
 O cluster precisa de dois acessos diferentes, e eles não são a mesma coisa:
 
-- **APIs do Google** (Dataproc, Pub/Sub, BigQuery, Storage): a VM alcança essas APIs mesmo sem IP externo.
-- **Internet aberta** (PyPI e GitHub): exige que a VM tenha um IP externo ou que o projeto tenha um
-  Cloud NAT.
+- **APIs do Google** (Dataproc, Pub/Sub, BigQuery, Storage): a VM alcança essas APIs mesmo sem IP externo,
+  através do Private Google Access.
+- **Internet aberta** (PyPI e GitHub): exige um Cloud NAT no projeto ou um IP externo na VM.
 
-O `gcloud dataproc clusters create` não garante o segundo. Quando nem `--no-address` nem
-`--public-ip-address` são passados, a documentação do comando avisa que *"the Dataproc service will apply
-a default policy to determine if each instance in the cluster gets an external IP address or not"*.
+E aqui está a parte que pega: **a partir da imagem 2.2, o cluster nasce sem IP externo**. A documentação
+oficial é explícita — *"By default, Managed Service for Apache Spark 2.2 and later image version clusters
+provision VMs with internal-IP-only addresses"* — e completa que *"by default, internal-ip-only clusters
+don't have access to the internet. Therefore, jobs that download dependencies from the internet [...] will
+fail"*.
 
-Quando essa política resulta em VM sem IP externo e o projeto não tem NAT, o efeito é traiçoeiro: o
-cluster cria normalmente, o JupyterLab abre pelo Component Gateway e está tudo aparentemente certo — até
-a primeira célula de `%pip install` ou o `git clone`, que ficam pendurados até dar timeout. Foi o que
-aconteceu na aula de 2025.
+O efeito é traiçoeiro porque o próprio Dataproc habilita o Private Google Access na sub-rede
+automaticamente. Resultado: o cluster cria normalmente, o JupyterLab abre, as chamadas ao Pub/Sub e ao
+BigQuery funcionam — e só o `pip install` e o `git clone` ficam pendurados até dar timeout. Foi
+exatamente o que aconteceu na aula de 2025.
 
-A seção 2 resolve isso pedindo o IP externo de forma explícita, em vez de depender dessa política. Se o
-projeto **proibir** IPs externos, o caminho é a alternativa da seção 6.
+Desmarcar `Apenas IP interno` no formulário do console **não resolve**: o cluster continua saindo sem IP
+externo. Por isso a saída é o Cloud NAT, que é também o primeiro item da lista de soluções da
+documentação oficial. Ele é configurado **uma vez, no projeto**, e todo cluster criado ali passa a ter
+internet, sem depender de nenhuma opção que o aluno tenha que marcar.
 
 ## 1. Configuração do projeto (uma vez, pelo professor)
 
-Os alunos não precisam — e normalmente não têm permissão — para rodar esta seção. Uma vez habilitadas, as
-APIs valem para todo mundo no projeto.
+Os alunos não precisam — e normalmente não têm permissão — para rodar esta seção. Feita uma vez, ela vale
+para todo cluster criado no projeto.
 
 Os comandos `gcloud` deste documento podem ser rodados no Cloud Shell, o terminal embutido no console:
 clique no ícone de terminal no canto superior direito e uma janela abre na parte de baixo da tela.
@@ -35,7 +39,12 @@ clique no ícone de terminal no canto superior direito e uma janela abre na part
 
 ```bash
 export PROJECT_ID=<projeto-da-aula>
+export REGION=us-central1
+```
 
+### 1.1. Habilitar as APIs
+
+```bash
 gcloud services enable \
     dataproc.googleapis.com \
     compute.googleapis.com \
@@ -49,18 +58,52 @@ Pela interface, cada API é habilitada na própria página do produto:
 
 ![Ativar a Dataflow API](imagens-dataflow/img1-enable.png)
 
+### 1.2. Cloud NAT
+
+É o que dá saída para a internet aos clusters, e é o passo que faltou na aula de 2025:
+
+```bash
+gcloud compute routers create roteador-aula-pdm \
+    --network=default --region=$REGION --project $PROJECT_ID
+
+gcloud compute routers nats create nat-aula-pdm \
+    --router=roteador-aula-pdm \
+    --region=$REGION \
+    --auto-allocate-nat-external-ips \
+    --nat-all-subnet-ip-ranges \
+    --project $PROJECT_ID
+```
+
+O NAT leva um ou dois minutos para propagar e é cobrado por hora enquanto existir. Se as aulas forem
+distantes uma da outra, dá para apagá-lo entre elas com `gcloud compute routers delete roteador-aula-pdm`.
+
+<!-- print do ensaio: tela do Cloud NAT criado no console -->
+
+### 1.3. Conferência
+
+```bash
+gcloud compute routers nats list \
+    --router=roteador-aula-pdm --region=$REGION --project $PROJECT_ID
+```
+
 ## 2. Criação do cluster (cada aluno cria o seu)
 
+Com o NAT da seção 1.2 no lugar, não há nenhuma opção de rede para o aluno acertar no formulário: o
+cluster sai sem IP externo, como é o padrão da imagem 2.2 em diante, e a internet chega pelo NAT.
+
+No console, o produto agora se chama **Apache Spark gerenciado** — é o novo nome do Dataproc no Compute
+Engine. O caminho é `Clusters` → `Criar cluster` → `Cluster no Compute Engine`.
+
 <!-- print do ensaio: formulário de criação do cluster no console -->
-<!-- print do ensaio: seção de rede do formulário, com a opção de IP interno DESMARCADA -->
 <!-- print do ensaio: lista de clusters com o status Executando -->
 
-O ponto que decide se a aula vai funcionar está na configuração de rede do formulário: a opção de deixar
-as instâncias **somente com IP interno** tem que ficar **desmarcada**. É ela que determina se o cluster
-enxerga o PyPI e o GitHub.
+O que importa preencher:
 
-Vale a pena conferir o botão de **linha de comando equivalente**, no fim do formulário: ele mostra o
-comando `gcloud` correspondente ao que você preencheu na tela.
+- **nome**, região `us-central1` e zona `us-central1-a`;
+- tipo de cluster **nó único**;
+- imagem **2.3 Debian 12**;
+- **gateway de componentes** ligado, e `Jupyter` nos componentes opcionais;
+- **exclusão programada** por ociosidade, para o cluster não ficar ligado depois da aula.
 
 Pelo terminal, o mesmo cluster sai com:
 
@@ -69,22 +112,24 @@ gcloud dataproc clusters create $USER \
     --region us-central1 \
     --zone us-central1-a \
     --subnet=default \
-    --public-ip-address \
-    --delete-max-idle=120m \
     --single-node \
     --master-machine-type n2-standard-4 \
-    --master-boot-disk-size 50GB \
-    --image-version 2.2-debian12 \
+    --master-boot-disk-size 100 \
+    --image-version 2.3-debian12 \
     --enable-component-gateway \
-    --optional-components=JUPYTER,ICEBERG \
+    --optional-components JUPYTER,ICEBERG \
+    --scopes 'https://www.googleapis.com/auth/cloud-platform' \
+    --delete-max-idle=120m \
     --project <projeto-da-aula>
 ```
 
-O `--public-ip-address` está explícito de propósito: é ele que garante a saída para a internet, sem
-depender da política padrão do serviço.
+O `--scopes cloud-platform` não é detalhe: o escopo padrão do Dataproc inclui BigQuery e Cloud Storage,
+mas **não inclui Pub/Sub**. Sem ele, as chamadas da aula 1 feitas de dentro do cluster falham por escopo
+insuficiente.
 
-O `--delete-max-idle=120m` apaga o cluster sozinho depois de 2 horas ocioso, para ninguém esquecer a
-máquina ligada.
+O botão **linha de comando equivalente**, no fim do formulário, mostra o comando correspondente ao que
+foi preenchido na tela — serve para conferir antes de criar. Ele não reflete a configuração de IP
+interno, então não estranhe a ausência de `--no-address`.
 
 ## 3. Acessando o JupyterLab
 
@@ -102,8 +147,8 @@ Já no JupyterLab, rode esta célula **antes** de qualquer outra coisa:
 !curl -sS -o /dev/null -w "%{http_code}\n" https://pypi.org/simple/
 ```
 
-O resultado esperado é `200`. Se a célula ficar pendurada e terminar em erro de conexão, o cluster subiu
-sem IP externo — refaça a seção 2 conferindo a opção de rede, ou use a alternativa da seção 6.
+O resultado esperado é `200`. Se a célula ficar pendurada e terminar em erro de conexão, o NAT da seção
+1.2 não está no lugar ou ainda não propagou.
 
 Os sintomas de um cluster sem saída para a internet são sempre os mesmos:
 
@@ -120,34 +165,16 @@ Ao fim da aula, apague o cluster para não acumular custo:
 gcloud dataproc clusters delete $USER --region us-central1 --project <projeto-da-aula>
 ```
 
-## 6. Alternativa: projeto que proíbe IP externo
+## 6. Por que não usar IP externo
 
-Organizações costumam ter uma política (`constraints/compute.vmExternalIpAccess`) que impede VMs com IP
-externo. Nesse caso a seção 2 falha, e a saída para a internet passa a depender de um Cloud NAT — que
-também é configurado **uma vez, pelo professor**:
+Até a imagem 2.1, o cluster nascia com IP externo e nada disso era necessário. A partir da 2.2 o padrão
+inverteu, e desmarcar `Apenas IP interno` no formulário não muda o resultado — o cluster sai sem IP
+externo do mesmo jeito. Some-se a isso que organizações costumam ter uma política
+(`constraints/compute.vmExternalIpAccess`) proibindo IPs externos, e o Cloud NAT acaba sendo o caminho
+que funciona nos dois cenários.
 
-```bash
-export PROJECT_ID=<projeto-da-aula>
-export REGION=us-central1
+## Referências
 
-# Deixa a VM alcançar as APIs do Google sem IP externo
-gcloud compute networks subnets update default \
-    --region=$REGION \
-    --enable-private-ip-google-access \
-    --project $PROJECT_ID
-
-# Dá a saída para a internet aberta
-gcloud compute routers create roteador-aula-pdm \
-    --network=default --region=$REGION --project $PROJECT_ID
-
-gcloud compute routers nats create nat-aula-pdm \
-    --router=roteador-aula-pdm \
-    --region=$REGION \
-    --auto-allocate-nat-external-ips \
-    --nat-all-subnet-ip-ranges \
-    --project $PROJECT_ID
-```
-
-Com o NAT no lugar, o cluster da seção 2 passa a ser criado com `--no-address` no lugar de
-`--public-ip-address` (ou, no formulário, com a opção de IP interno **marcada**). O NAT leva um ou dois
-minutos para propagar e é cobrado por hora enquanto existir.
+- [Configuração de rede do cluster](https://cloud.google.com/dataproc/docs/concepts/network) — o padrão
+  de IP interno da imagem 2.2 em diante e a lista de soluções para baixar dependências.
+- [Configurar o Cloud NAT](https://cloud.google.com/nat/docs/set-up-manage-network-address-translation)
