@@ -22,10 +22,15 @@ automaticamente. Resultado: o cluster cria normalmente, o JupyterLab abre, as ch
 BigQuery funcionam — e só o `pip install` e o `git clone` ficam pendurados até dar timeout. Foi
 exatamente o que aconteceu na aula de 2025.
 
-Desmarcar `Apenas IP interno` no formulário do console **não resolve**: o cluster continua saindo sem IP
-externo. Por isso a saída é o Cloud NAT, que é também o primeiro item da lista de soluções da
-documentação oficial. Ele é configurado **uma vez, no projeto**, e todo cluster criado ali passa a ter
-internet, sem depender de nenhuma opção que o aluno tenha que marcar.
+Há dois jeitos de resolver, e a escolha depende de como o cluster é criado:
+
+- **Pela linha de comando**: basta a flag `--public-ip-address` na criação, como na seção 2. Não exige
+  nenhuma configuração prévia no projeto.
+- **Pela interface**: desmarcar `Apenas IP interno` no formulário **não resolve** — o cluster continua
+  saindo sem IP externo. Nesse caso o caminho é o Cloud NAT da seção 1.2, configurado uma vez no
+  projeto, que vale para todo cluster criado ali.
+
+O Cloud NAT também é o único caminho quando a organização proíbe IPs externos, como explica a seção 6.
 
 ## 1. Configuração do projeto (uma vez, pelo professor)
 
@@ -112,6 +117,7 @@ gcloud dataproc clusters create $USER \
     --region us-central1 \
     --zone us-central1-a \
     --subnet=default \
+    --public-ip-address \
     --single-node \
     --master-machine-type n2-standard-4 \
     --master-boot-disk-size 100 \
@@ -122,6 +128,15 @@ gcloud dataproc clusters create $USER \
     --delete-max-idle=120m \
     --project <projeto-da-aula>
 ```
+
+O `--public-ip-address` pede o IP externo de forma explícita, e é o caminho mais curto: com ele a VM sai
+para a internet sozinha e o Cloud NAT da seção 1.2 deixa de ser necessário.
+
+Atenção a uma diferença que custou uma tarde de investigação: **a opção equivalente do formulário não
+produz o mesmo resultado**. Criando pelo console com `Apenas IP interno` desmarcado, o cluster ainda
+nasce com `internalIpOnly: true` — conferido no registro da operação de criação. Ou seja, quem cria pela
+interface depende do NAT; quem cria pela linha de comando pode usar a flag. A célula de conferência da
+seção 4 diz em qual dos dois casos você está.
 
 O `--scopes cloud-platform` não é detalhe: o escopo padrão do Dataproc inclui BigQuery e Cloud Storage,
 mas **não inclui Pub/Sub**. Sem ele, as chamadas da aula 1 feitas de dentro do cluster falham por escopo
@@ -157,6 +172,20 @@ Os sintomas de um cluster sem saída para a internet são sempre os mesmos:
 - os dois falham, mas as chamadas ao Pub/Sub e ao BigQuery funcionam, o que faz a falha parecer
   qualquer outra coisa.
 
+### 4.1. Se o cluster ficar sem internet
+
+Sem saída para a internet, o `git clone` do repositório e a célula que baixa os dados não funcionam,
+porque GitHub não é API do Google. O Cloud Storage **é**, e continua acessível pelo Private Google
+Access — então dá para pegar o material por lá:
+
+```bash
+wget https://storage.googleapis.com/aula-pdm-codigo/aula-pdm-pubsub-main.zip
+unzip aula-pdm-pubsub-main.zip
+```
+
+Isso resolve o material, mas não o `pip install`: PyPI continua inalcançável. Serve como plano B para
+salvar a aula, não como configuração definitiva.
+
 ## 5. Apagando o cluster
 
 Ao fim da aula, apague o cluster para não acumular custo:
@@ -165,13 +194,14 @@ Ao fim da aula, apague o cluster para não acumular custo:
 gcloud dataproc clusters delete $USER --region us-central1 --project <projeto-da-aula>
 ```
 
-## 6. Por que não usar IP externo
+## 6. Quando o IP externo não é uma opção
 
-Até a imagem 2.1, o cluster nascia com IP externo e nada disso era necessário. A partir da 2.2 o padrão
-inverteu, e desmarcar `Apenas IP interno` no formulário não muda o resultado — o cluster sai sem IP
-externo do mesmo jeito. Some-se a isso que organizações costumam ter uma política
-(`constraints/compute.vmExternalIpAccess`) proibindo IPs externos, e o Cloud NAT acaba sendo o caminho
-que funciona nos dois cenários.
+Organizações costumam ter uma política (`constraints/compute.vmExternalIpAccess`) que impede VMs com IP
+externo. Nesses projetos o `--public-ip-address` falha, e o Cloud NAT da seção 1.2 passa a ser o único
+caminho. O mesmo vale para quem cria o cluster pela interface, pela razão explicada na seção 2.
+
+Até a imagem 2.1 nada disso era necessário: o cluster nascia com IP externo por padrão. A partir da 2.2 o
+padrão inverteu, e é daí que vem toda esta seção do documento.
 
 ## Referências
 
