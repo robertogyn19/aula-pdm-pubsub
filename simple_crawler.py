@@ -86,7 +86,7 @@ class ChavesNaMaoCrawler:
                 next_url = self._proxima_url(payload)
             except Exception as e:
                 logging.error(f"Erro ao coletar página {page}: {e}")
-                self.salva_payload_json(payload, f"../dados/erro_{level2}_pagina_{page}.json")
+                self.salva_payload_json(payload, f"dados/erro_{level2}_pagina_{page}.json")
                 continue
             finally:
                 # Adiciona um delay de 1s entre as requisições para não sobrecarregar a API
@@ -247,11 +247,11 @@ def realizar_coleta_varias_paginas():
     level1 = "casas-a-venda"
 
     crawler = ChavesNaMaoCrawler()
-    chaves_na_mao_level2 = Path("../dados/chavesnamao_level2.txt").read_text().splitlines()
+    chaves_na_mao_level2 = Path("dados/chavesnamao_level2.txt").read_text().splitlines()
 
     for level2 in chaves_na_mao_level2:
         logging.info(f"Coletando anúncios para {level1} / {level2}...")
-        arquivo_de_saida = f"../dados/anuncios/anuncios_{level2}.jsonl"
+        arquivo_de_saida = f"dados/anuncios/anuncios_{level2}.jsonl"
 
         if Path(arquivo_de_saida).exists():
             logging.info(f"O arquivo {arquivo_de_saida} já existe. Pulando coleta.")
@@ -268,7 +268,7 @@ def realizar_coleta_varias_paginas():
 def realizar_coleta_goiania():
     level1 = "imoveis-a-venda"
     level2 = "go-goiania"
-    arquivo_de_saida = f"../dados/anuncios/imoveis_{level2}.jsonl"
+    arquivo_de_saida = f"dados/anuncios/imoveis_{level2}.jsonl"
 
     crawler = ChavesNaMaoCrawler()
 

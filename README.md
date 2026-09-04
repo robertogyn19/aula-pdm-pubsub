@@ -1,66 +1,57 @@
-# Aula de PDM sobre GCP Pub/Sub
+# Aula de PDM — GCP Pub/Sub e Dataflow
 
-Esse repositório tem um notebook com alguns exemplos práticos do GCP Pub/Sub.
-A forma mais simples de consumir o conteúdo é importando diretmante no Jupyter do Dataproc.
-Caso precise executar localmente, é necessário autenticar no GCP, você pode utilizar o comando abaixo.
+Material das aulas de Processamento de Dados Massivos (PDM) sobre serviços de dados da Google Cloud.
+O conteúdo está em notebooks Jupyter, que rodam tanto nos notebooks do BigQuery Studio quanto no
+JupyterLab de um cluster Dataproc.
 
-```shell
+## Notebooks
+
+- **Aula 1 — `gcp-pubsub-v2.ipynb`**: tópicos, assinaturas, retenção e *seek*, assinatura do BigQuery
+  com esquema e DLQ, assinatura do Cloud Storage em Avro. **É por aqui que você começa.**
+- **Aula 2 — `gcp-dataflow.ipynb`**: Apache Beam, o exemplo de *wordcount* e a execução do mesmo
+  pipeline com o `DirectRunner` e com o `DataflowRunner`.
+- `publicacao-anuncios.ipynb`: versão avulsa da publicação dos anúncios, para ambientes com terminal.
+  Nos notebooks do BigQuery Studio, use a seção 6 da aula 1, que já traz essas células.
+- `crawler-dados.ipynb` e `simple_crawler.py`: como os dados de anúncios foram coletados. O notebook
+  importa o script, que é onde a lógica de fato vive.
+- `crawler-download-imagens.ipynb`: download das imagens dos anúncios coletados.
+- `ml/`: análise dessas imagens com o Gemini. Veja o [`ml/README.md`](ml/README.md), que explica como
+  criar a chave de API.
+- `subscriber.py` e `subscriber_with_seek.py`: os assinantes da seção 2 da aula 1 em formato de script,
+  para rodar em um terminal ao lado do notebook — um assinante ativo bloqueia o kernel do Jupyter.
+- `arquivo/`: material que não é mais usado em aula, guardado como referência — a edição de 2024
+  (`gcp-pubsub-v1.ipynb`, com dados de clientes e vendas em CSV) e um rascunho de publicação.
+
+## Preparação do ambiente
+
+**Notebooks do BigQuery Studio**: não há nada a preparar. Faça o upload do `gcp-pubsub-v2.ipynb` pelo
+painel do BigQuery — o passo a passo, com imagens, está na primeira seção do próprio notebook.
+
+**Cluster Dataproc**: a criação do cluster e a configuração de rede que lhe dá saída para a internet
+estão em [`SETUP-DATAPROC.md`](SETUP-DATAPROC.md).
+
+Em ambos, os dados de anúncios são obtidos por uma célula do próprio notebook; o `git clone` deixou de
+ser necessário.
+
+## Execução local
+
+Rodar localmente também funciona, mas exige autenticação no GCP:
+
+```bash
 gcloud auth application-default login
 ```
 
-Para criar um cluster dataproc, você pode utilizar o comando abaixo:
+Os notebooks descobrem o projeto pela credencial (`google.auth.default()`), então confira antes que a
+conta e o projeto ativos são os que você quer usar:
 
 ```bash
-export USER=<use-nome>
-export PROJECT_ID=$(gcloud config get project)
-
-# Verifique se o ID do projeto do comando abaixo está correto
-echo $PROJECT_ID
-
-gcloud dataproc clusters create $USER \
-   --region us-central1 \
-   --zone us-central1-a \
-   --subnet=default \
-   --single-node \
-   --public-ip-address \
-   --master-machine-type n2-standard-8 \
-   --master-boot-disk-size 50GB \
-   --image-version 2.2-debian12 \
-   --enable-component-gateway \
-   --optional-components=JUPYTER,ICEBERG \
-   --project $PROJECT_ID
+gcloud config list
 ```
 
-Caso esteja sem internet no dataproc, execute esse comando abaixo no terminal
+Veja a [documentação oficial](https://googleapis.dev/python/google-api-core/latest/auth.html) para
+mais detalhes sobre autenticação.
 
-```
-wget https://storage.googleapis.com/aula-pdm-codigo/aula-pdm-pubsub-main.zip
-unzip aula-pdm-pubsub-main.zip
-```
+## Permissões
 
-Veja a [documentação oficial](https://googleapis.dev/python/google-api-core/latest/auth.html) para mais detalhes.
-
-### Permissões
-
-Caso queira deixar todas as permissões liberadas para o Pub/Sub, você pode executar o comando abaixo no Google Cloud
-Shell.
-
-```shell
-# Obtém o ID do projeto
-export PROJECT_ID=$(gcloud config get project)
-
-# Obtém o número do projeto
-export PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
-
-# Conta de serviço do Pub/Sub
-export SA=$(echo "service-$PROJECT_NUMBER@gcp-sa-pubsub.iam.gserviceaccount.com")
-
-# Concede as permissões necessárias
-gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-  --member="serviceAccount:$SA" \
-  --role="roles/bigquery.dataEditor"
-
-gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-  --member="serviceAccount:$SA" \
-  --role="roles/storage.admin"
-```
+O Pub/Sub precisa de permissão para escrever no BigQuery e no Cloud Storage. Isso é feito por células do
+próprio `gcp-pubsub-v2.ipynb`, nas seções 4.1, 4.4 e 7.2 — não é preciso rodar nada por fora.
