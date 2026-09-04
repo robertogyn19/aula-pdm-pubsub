@@ -40,7 +40,7 @@ para todo cluster criado no projeto.
 Os comandos `gcloud` deste documento podem ser rodados no Cloud Shell, o terminal embutido no console:
 clique no ícone de terminal no canto superior direito e uma janela abre na parte de baixo da tela.
 
-![Cloud Shell](imagens-dataflow/img2-cloud-shell.png)
+![Cloud Shell](arquivo/imagens-dataflow/img2-cloud-shell.png)
 
 ```bash
 export PROJECT_ID=<projeto-da-aula>
@@ -61,7 +61,7 @@ gcloud services enable \
 
 Pela interface, cada API é habilitada na própria página do produto:
 
-![Ativar a Dataflow API](imagens-dataflow/img1-enable.png)
+![Ativar a Dataflow API](arquivo/imagens-dataflow/img1-enable.png)
 
 ### 1.2. Cloud NAT
 
