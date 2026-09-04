@@ -8,3 +8,4 @@ __pycache__
 dados/**/*.csv
 dados/**/*.json
 dados/**/*.jsonl
+docs/superpowers
