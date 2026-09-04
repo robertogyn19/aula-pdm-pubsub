@@ -17,9 +17,10 @@ JupyterLab de um cluster Dataproc.
   para rodar em um terminal ao lado do notebook — um assinante ativo bloqueia o kernel do Jupyter.
 - `arquivo/`: material que não é mais usado em aula, guardado como referência. A edição de 2024
   (`gcp-pubsub-v1.ipynb`), o notebook de Dataflow e Apache Beam (`gcp-dataflow.ipynb`), os dois
-  notebooks de crawler que a aula 2 absorveu, e o `ml/` — a análise de imóveis com o Gemini via
-  LangChain, com o prompt completo de avaliação que serve de ponto de partida para o trabalho de casa
-  da aula 2.
+  notebooks de crawler que a aula 2 absorveu, `publicacao-anuncios.ipynb` e `publisher.ipynb` — a
+  publicação avulsa dos anúncios e um rascunho de publicação, ambos superados pela seção 6 da aula 1 —,
+  e o `ml/` — a análise de imóveis com o Gemini via LangChain, com o prompt completo de avaliação que
+  serve de ponto de partida para o trabalho de casa da aula 2.
 
 ## Preparação do ambiente
 
