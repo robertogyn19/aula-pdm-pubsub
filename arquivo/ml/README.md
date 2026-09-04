@@ -19,5 +19,5 @@ Para executar o código, certifique-se de ter as bibliotecas necessárias instal
 utilizando o arquivo `requirements.txt`:
 
 ```bash
-pip install -r requirements.txt
+pip install -r ../requirements.txt
 ```

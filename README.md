@@ -1,4 +1,4 @@
-# Aula de PDM — GCP Pub/Sub e Dataflow
+# Aula de PDM — GCP Pub/Sub e pipeline de anúncios
 
 Material das aulas de Processamento de Dados Massivos (PDM) sobre serviços de dados da Google Cloud.
 O conteúdo está em notebooks Jupyter, que rodam tanto nos notebooks do BigQuery Studio quanto no
@@ -21,6 +21,8 @@ JupyterLab de um cluster Dataproc.
   publicação avulsa dos anúncios e um rascunho de publicação, ambos superados pela seção 6 da aula 1 —,
   e o `ml/` — a análise de imóveis com o Gemini via LangChain, com o prompt completo de avaliação que
   serve de ponto de partida para o trabalho de casa da aula 2.
+- `tests/` e `requirements-dev.txt`: os testes automatizados do `simple_crawler.py` e as dependências
+  usadas só no desenvolvimento do material — não entram em aula.
 
 ## Preparação do ambiente
 
