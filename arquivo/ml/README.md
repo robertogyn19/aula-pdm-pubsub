@@ -16,7 +16,7 @@ Siga os passos abaixo para criar a chave:
 - Copie a chave gerada e defina a variável de ambiente `GOOGLE_API_KEY` no seu ambiente local ou no notebook.
 
 Para executar o código, certifique-se de ter as bibliotecas necessárias instaladas. Você pode instalar as dependências
-utilizando o arquivo `requirements.txt`:
+utilizando o `requirements.txt` do diretório `arquivo/`, um nível acima deste:
 
 ```bash
 pip install -r ../requirements.txt
