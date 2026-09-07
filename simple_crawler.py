@@ -1,14 +1,23 @@
 import json
 import logging
+from io import BytesIO
 from pathlib import Path
 from time import sleep
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
+from PIL import Image
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logging = logging.getLogger(__name__)
+
+
+# As imagens dos anúncios não vêm na resposta da API: o que vem é o caminho de cada
+# arquivo, que se combina com esta base para formar a URL. O trecho 0000x0000 pede o
+# original, sem redimensionamento.
+IMG_BASE_URL = "https://www.chavesnamao.com.br/imn/0000x0000/N/75/imoveis"
 
 
 class Anuncio(BaseModel):
@@ -42,6 +51,9 @@ class Anuncio(BaseModel):
     def endereco(self) -> str:
         partes = [self.rua, self.bairro, self.cidade, self.estado, self.cep]
         return ", ".join([parte for parte in partes if parte])
+
+    def urls_imagens(self, base_url: str = IMG_BASE_URL) -> list[str]:
+        return [f"{base_url}/{imagem}" for imagem in self.imagens]
 
 
 class ChavesNaMaoCrawler:
@@ -241,6 +253,34 @@ class ChavesNaMaoCrawler:
                 return 0
 
         return 0
+
+
+def baixar_imagem(url: str, destino: str | Path, timeout: int = 10) -> Path:
+    """Baixa a imagem de `url` e grava em `destino`, sempre como JPEG.
+
+    O site às vezes responde WebP mesmo quando o pedido é por JPEG, então o formato
+    real é detectado pelo conteúdo e convertido quando necessário. Devolve o caminho
+    do arquivo gravado, que sempre termina em `.jpg`.
+    """
+    destino = Path(destino).with_suffix(".jpg")
+    destino.parent.mkdir(parents=True, exist_ok=True)
+
+    headers = {
+        "Accept": "image/jpeg,image/*;q=0.8,*/*;q=0.5",
+        "User-Agent": "python-requests",
+        "Referer": f"{urlparse(url).scheme}://{urlparse(url).hostname}/",
+    }
+
+    resposta = requests.get(url, headers=headers, timeout=timeout)
+    resposta.raise_for_status()
+
+    with Image.open(BytesIO(resposta.content)) as imagem:
+        if imagem.format == "JPEG":
+            destino.write_bytes(resposta.content)
+        else:
+            imagem.convert("RGB").save(destino, format="JPEG", quality=90, optimize=True)
+
+    return destino
 
 
 def realizar_coleta_varias_paginas():

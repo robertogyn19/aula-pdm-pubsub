@@ -1,0 +1,2 @@
+# Dependências usadas só no desenvolvimento do material, não em aula.
+pytest>=8.0.0

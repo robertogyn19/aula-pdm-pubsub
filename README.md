@@ -1,4 +1,4 @@
-# Aula de PDM — GCP Pub/Sub e Dataflow
+# Aula de PDM — GCP Pub/Sub e pipeline de anúncios
 
 Material das aulas de Processamento de Dados Massivos (PDM) sobre serviços de dados da Google Cloud.
 O conteúdo está em notebooks Jupyter, que rodam tanto nos notebooks do BigQuery Studio quanto no
@@ -8,19 +8,21 @@ JupyterLab de um cluster Dataproc.
 
 - **Aula 1 — `gcp-pubsub-v2.ipynb`**: tópicos, assinaturas, retenção e *seek*, assinatura do BigQuery
   com esquema e DLQ, assinatura do Cloud Storage em Avro. **É por aqui que você começa.**
-- **Aula 2 — `gcp-dataflow.ipynb`**: Apache Beam, o exemplo de *wordcount* e a execução do mesmo
-  pipeline com o `DirectRunner` e com o `DataflowRunner`.
-- `publicacao-anuncios.ipynb`: versão avulsa da publicação dos anúncios, para ambientes com terminal.
-  Nos notebooks do BigQuery Studio, use a seção 6 da aula 1, que já traz essas células.
-- `crawler-dados.ipynb` e `simple_crawler.py`: como os dados de anúncios foram coletados. O notebook
-  importa o script, que é onde a lógica de fato vive.
-- `crawler-download-imagens.ipynb`: download das imagens dos anúncios coletados.
-- `ml/`: análise dessas imagens com o Gemini. Veja o [`ml/README.md`](ml/README.md), que explica como
-  criar a chave de API.
+- **Aula 2 — `gcp-pipeline-anuncios.ipynb`**: o pipeline completo de um anúncio. A coleta na API do
+  Chaves na Mão, o texto seguindo pelo Pub/Sub até o BigQuery, as imagens seguindo para o Cloud
+  Storage, e a extração de uma característica da imagem com o Gemini. Depende da infraestrutura criada
+  na aula 1.
+- `simple_crawler.py`: a coleta dos anúncios e o download das imagens. É o que a aula 2 importa.
 - `subscriber.py` e `subscriber_with_seek.py`: os assinantes da seção 2 da aula 1 em formato de script,
   para rodar em um terminal ao lado do notebook — um assinante ativo bloqueia o kernel do Jupyter.
-- `arquivo/`: material que não é mais usado em aula, guardado como referência — a edição de 2024
-  (`gcp-pubsub-v1.ipynb`, com dados de clientes e vendas em CSV) e um rascunho de publicação.
+- `arquivo/`: material que não é mais usado em aula, guardado como referência. A edição de 2024
+  (`gcp-pubsub-v1.ipynb`), o notebook de Dataflow e Apache Beam (`gcp-dataflow.ipynb`), os dois
+  notebooks de crawler que a aula 2 absorveu, `publicacao-anuncios.ipynb` e `publisher.ipynb` — a
+  publicação avulsa dos anúncios e um rascunho de publicação, ambos superados pela seção 6 da aula 1 —,
+  e o `ml/` — a análise de imóveis com o Gemini via LangChain, com o prompt completo de avaliação que
+  serve de ponto de partida para o trabalho de casa da aula 2.
+- `tests/` e `requirements-dev.txt`: os testes automatizados do `simple_crawler.py` e as dependências
+  usadas só no desenvolvimento do material — não entram em aula.
 
 ## Preparação do ambiente
 
@@ -32,6 +34,13 @@ estão em [`SETUP-DATAPROC.md`](SETUP-DATAPROC.md).
 
 Em ambos, os dados de anúncios são obtidos por uma célula do próprio notebook; o `git clone` deixou de
 ser necessário.
+
+A aula 2 usa o Gemini pela Vertex AI, com a mesma credencial do notebook — não é preciso criar chave de
+API. A única exigência é a API estar habilitada no projeto, o que a primeira célula da seção 4 faz:
+
+```bash
+gcloud services enable aiplatform.googleapis.com
+```
 
 ## Execução local
 
